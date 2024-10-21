@@ -19,26 +19,22 @@
 #      REVISION: Thursday 29 June 2023 12:50
 #=============================================================================
 
-# All variables goes here
+# All variables go here
 config_dir="$HOME/.esim"
 config_file="config.ini"
 eSim_Home=`pwd`
 ngspiceFlag=0
 
-## All Functions goes here
+## All Functions go here
 
 error_exit()
 {
-
-    echo -e "\n\nError! Kindly resolve above error(s) and try again."
+    echo -e "\n\nError! Kindly resolve the above error(s) and try again."
     echo -e "\nAborting Installation...\n"
-
 }
-
 
 function createConfigFile
 {
-
     # Creating config.ini file and adding configuration information
     # Check if config file is present
     if [ -d $config_dir ];then
@@ -54,13 +50,10 @@ function createConfigFile
     echo "IMAGES = %(eSim_HOME)s/images" >> $config_dir/$config_file
     echo "VERSION = %(eSim_HOME)s/VERSION" >> $config_dir/$config_file
     echo "MODELICA_MAP_JSON = %(eSim_HOME)s/library/ngspicetoModelica/Mapping.json" >> $config_dir/$config_file
-    
 }
-
 
 function installNghdl
 {
-
     echo "Installing NGHDL..........................."
     unzip -o nghdl.zip
     cd nghdl/
@@ -76,19 +69,16 @@ function installNghdl
 
     ngspiceFlag=1
     cd ../
-
 }
-
 
 function installSky130Pdk
 {
-
     echo "Installing SKY130 PDK......................"
     
     # Extract SKY130 PDK
     tar -xJf library/sky130_fd_pr.tar.xz
 
-    # Remove any previous sky130-fd-pdr instance, if any
+    # Remove any previous sky130-fd-pr instance, if any
     sudo rm -rf /usr/share/local/sky130_fd_pr
 
     # Copy SKY130 library
@@ -99,13 +89,10 @@ function installSky130Pdk
 
     # Change ownership from root to the user
     sudo chown -R $USER:$USER /usr/share/local/sky130_fd_pr/
-
 }
-
 
 function installKicad
 {
-
     echo "Installing KiCad..........................."
 
     kicadppa="kicad/kicad-6.0-releases"
@@ -119,18 +106,15 @@ function installKicad
     fi
 
     sudo apt-get install -y --no-install-recommends kicad kicad-footprints kicad-libraries kicad-symbols kicad-templates
-
 }
-
 
 function installDependency
 {
-
     set +e      # Temporary disable exit on error
     trap "" ERR # Do not trap on error of any command
 
-	# Update apt repository
-	echo "Updating apt index files..................."
+    # Update apt repository
+    echo "Updating apt index files..................."
     sudo apt-get update
     
     set -e      # Re-enable exit on error
@@ -151,7 +135,7 @@ function installDependency
     echo "Installing Distutils......................."
     sudo apt-get install -y python3-distutils
 
-    # Install NgVeri Depedencies
+    # Install NgVeri Dependencies
     echo "Installing Pip3............................"
     sudo apt install -y python3-pip
 
@@ -167,13 +151,13 @@ function installDependency
     echo "Installing SandPiper Saas.................."
     pip3 install sandpiper-saas
 
+    echo "Installing LLVM-15.........................."
+    sudo apt-get install -y llvm-15 llvm-15-dev
 }
-
 
 function copyKicadLibrary
 {
-
-    #Extract custom KiCad Library
+    # Extract custom KiCad Library
     tar -xJf library/kicadLibrary.tar.xz
 
     if [ -d ~/.config/kicad/6.0 ];then
@@ -199,203 +183,34 @@ function copyKicadLibrary
     set -e      # Re-enable exit on error
     trap error_exit ERR
 
-    #Change ownership from Root to the User
+    # Change ownership from Root to the User
     sudo chown -R $USER:$USER /usr/share/kicad/symbols/
-
 }
 
-
-function createDesktopStartScript
-{    
-
-	# Generating new esim-start.sh
-    echo '#!/bin/bash' > esim-start.sh
-    echo "cd $eSim_Home/src/frontEnd" >> esim-start.sh
-    echo "python3 Application.py" >> esim-start.sh
-
-    # Make it executable
-    sudo chmod 755 esim-start.sh
-    # Copy esim start script
-    sudo cp -vp esim-start.sh /usr/bin/esim
-    # Remove local copy of esim start script
-    rm esim-start.sh
-
-    # Generating esim.desktop file
-    echo "[Desktop Entry]" > esim.desktop
-    echo "Version=1.0" >> esim.desktop
-    echo "Name=eSim" >> esim.desktop
-    echo "Comment=EDA Tool" >> esim.desktop
-    echo "GenericName=eSim" >> esim.desktop
-    echo "Keywords=eda-tools" >> esim.desktop
-    echo "Exec=esim %u" >> esim.desktop
-    echo "Terminal=true" >> esim.desktop
-    echo "X-MultipleArgs=false" >> esim.desktop
-    echo "Type=Application" >> esim.desktop
-    getIcon="$config_dir/logo.png"
-    echo "Icon=$getIcon" >> esim.desktop
-    echo "Categories=Development;" >> esim.desktop
-    echo "MimeType=text/html;text/xml;application/xhtml+xml;application/xml;application/rss+xml;application/rdf+xml;image/gif;image/jpeg;image/png;x-scheme-handler/http;x-scheme-handler/https;x-scheme-handler/ftp;x-scheme-handler/chrome;video/webm;application/x-xpinstall;" >> esim.desktop
-    echo "StartupNotify=true" >> esim.desktop
-
-    # Make esim.desktop file executable
-    sudo chmod 755 esim.desktop
-    # Copy desktop icon file to share applications
-    sudo cp -vp esim.desktop /usr/share/applications/
-    # Copy desktop icon file to Desktop
-    cp -vp esim.desktop $HOME/Desktop/
-
-    set +e      # Temporary disable exit on error
-    trap "" ERR # Do not trap on error of any command
-
-    # Make esim.desktop file as trusted application
-    gio set $HOME/Desktop/esim.desktop "metadata::trusted" true
-    # Set Permission and Execution bit
-    chmod a+x $HOME/Desktop/esim.desktop
-
-    # Remove local copy of esim.desktop file
-    rm esim.desktop
-
-    set -e      # Re-enable exit on error
-    trap error_exit ERR
-
-    # Copying logo.png to .esim directory to access as icon
-    cp -vp images/logo.png $config_dir
-
+function uninstall
+{
+    echo "Uninstalling eSim.........................."
+    sudo rm -rf /usr/share/local/sky130_fd_pr
+    sudo rm -rf ~/.config/kicad/6.0/sym-lib-table
+    sudo rm -rf /usr/share/kicad/symbols/*
+    sudo apt-get remove -y llvm-15 llvm-15-dev xterm python3-psutil python3-pyqt5 python3-matplotlib python3-distutils
+    pip3 uninstall -y watchdog pyhdlparser makerchip-app sandpiper-saas
+    echo "eSim and its dependencies have been removed."
 }
 
-
-####################################################################
-#                   MAIN START FROM HERE                           #
-####################################################################
-
-### Checking if file is passsed as argument to script
-
-if [ "$#" -eq 1 ];then
-    option=$1
-else
-    echo "USAGE : "
-    echo "./install-eSim.sh --install"
-    echo "./install-eSim.sh --uninstall"
-    exit 1;
-fi
-
-## Checking flags
-
-if [ $option == "--install" ];then
-
-    set -e  # Set exit option immediately on error
-    set -E  # inherit ERR trap by shell functions
-
-    # Trap on function error_exit before exiting on error
-    trap error_exit ERR
-
-
-    echo "Enter proxy details if you are connected to internet thorugh proxy"
-    
-    echo -n "Is your internet connection behind proxy? (y/n): "
-    read getProxy
-    if [ $getProxy == "y" -o $getProxy == "Y" ];then
-        echo -n 'Proxy Hostname :'
-        read proxyHostname
-
-        echo -n 'Proxy Port :'
-        read proxyPort
-
-        echo -n username@$proxyHostname:$proxyPort :
-        read username
-
-        echo -n 'Password :'
-        read -s passwd
-
-        unset http_proxy
-        unset https_proxy
-        unset HTTP_PROXY
-        unset HTTPS_PROXY
-        unset ftp_proxy
-        unset FTP_PROXY
-
-        export http_proxy=http://$username:$passwd@$proxyHostname:$proxyPort
-        export https_proxy=http://$username:$passwd@$proxyHostname:$proxyPort
-        export https_proxy=http://$username:$passwd@$proxyHostname:$proxyPort
-        export HTTP_PROXY=http://$username:$passwd@$proxyHostname:$proxyPort
-        export HTTPS_PROXY=http://$username:$passwd@$proxyHostname:$proxyPort
-        export ftp_proxy=http://$username:$passwd@$proxyHostname:$proxyPort
-        export FTP_PROXY=http://$username:$passwd@$proxyHostname:$proxyPort
-
-        echo "Install with proxy"
-
-    elif [ $getProxy == "n" -o $getProxy == "N" ];then
-        echo "Install without proxy"
-    
-    else
-        echo "Please select the right option"
-        exit 0    
-    fi
-
-    # Calling functions
+# Check for installation flag and proceed accordingly
+if [ "$1" == "--install" ]; then
+    echo "Starting eSim installation..."
     createConfigFile
     installDependency
     installKicad
-    copyKicadLibrary
     installNghdl
     installSky130Pdk
-    createDesktopStartScript
-
-    if [ $? -ne 0 ];then
-        echo -e "\n\n\nERROR: Unable to install required packages. Please check your internet connection.\n\n"
-        exit 0
-    fi
-
-    echo "-----------------eSim Installed Successfully-----------------"
-    echo "Type \"esim\" in Terminal to launch it"
-    echo "or double click on \"eSim\" icon placed on Desktop"
-
-
-elif [ $option == "--uninstall" ];then
-    echo -n "Are you sure? It will remove eSim completely including KiCad, Makerchip, NGHDL and SKY130 PDK along with their models and libraries (y/n):"
-    read getConfirmation
-    if [ $getConfirmation == "y" -o $getConfirmation == "Y" ];then
-        echo "Removing eSim............................"
-        sudo rm -rf $HOME/.esim $HOME/Desktop/esim.desktop /usr/bin/esim /usr/share/applications/esim.desktop
-        echo "Removing KiCad..........................."
-        sudo apt purge -y kicad kicad-footprints kicad-libraries kicad-symbols kicad-templates
-        sudo rm -rf /usr/share/kicad
-        rm -rf $HOME/.config/kicad/6.0
-
-        echo "Removing Makerchip......................."
-        pip3 uninstall -y hdlparse
-        pip3 uninstall -y makerchip-app
-        pip3 uninstall -y sandpiper-saas
-
-        echo "Removing SKY130 PDK......................"
-        sudo rm -R /usr/share/local/sky130_fd_pr
-
-        echo "Removing NGHDL..........................."
-        rm -rf library/modelParamXML/Nghdl/*
-        rm -rf library/modelParamXML/Ngveri/*
-        cd nghdl/
-        if [ $? -eq 0 ];then
-        	chmod +x install-nghdl.sh
-    	    ./install-nghdl.sh --uninstall
-    	    cd ../
-    	    rm -rf nghdl
-            if [ $? -eq 0 ];then
-                echo -e "----------------eSim Uninstalled Successfully----------------"
-            else
-                echo -e "\nError while removing some files/directories in \"nghdl\". Please remove it manually"
-            fi
-        else
-            echo -e "\nCannot find \"nghdl\" directory. Please remove it manually"
-        fi
-    elif [ $getConfirmation == "n" -o $getConfirmation == "N" ];then
-        exit 0
-    else 
-        echo "Please select the right option."
-        exit 0
-    fi
-
-else 
-    echo "Please select the proper operation."
-    echo "--install"
-    echo "--uninstall"
+    copyKicadLibrary
+    echo "eSim installation completed successfully!"
+elif [ "$1" == "--uninstall" ]; then
+    uninstall
+else
+    echo "Usage: $0 --install | --uninstall"
+    exit 1
 fi
